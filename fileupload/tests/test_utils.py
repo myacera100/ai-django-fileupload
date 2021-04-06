@@ -1,6 +1,6 @@
 import urllib
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 
 def build_url(*args, **kwargs):

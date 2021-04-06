@@ -1,4 +1,3 @@
-# encoding: utf-8
 import os
 import uuid
 
@@ -6,15 +5,22 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
 from django.db import models
+from django.urls import reverse
+
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 
 from fileupload.constants import UPLOADER_UPLOAD_DIRECTORY
 
+# MOD: import `get_uploader_dir`
+from .thumbnail import get_uploader_dir
 
 def upload_to(instance, file_name):
     file_new_name = "{0}.{1}".format(uuid.uuid4().hex, file_name.split('.')[-1])
-    file_dir = os.path.join(UPLOADER_UPLOAD_DIRECTORY, file_new_name)
+    # MOD: replace UPLOADER_UPLOAD_DIRECTORY with `get_uploader_dir` feeding
+    # two params of <instance> and <file_name>
+    file_dir = os.path.join(get_uploader_dir(file_name, instance), file_new_name)
+    # file_dir = os.path.join(UPLOADER_UPLOAD_DIRECTORY, file_new_name)
     while Attachment.objects.filter(file=file_dir):
         upload_to(instance, file_name)
 
@@ -43,7 +49,7 @@ class CommonInfo(models.Model):
 
 class Attachment(CommonInfo):
     file = models.FileField(_(u"File"), upload_to=upload_to)
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey('content_type', 'object_id')
 
@@ -54,9 +60,8 @@ class Attachment(CommonInfo):
     def __str__(self):
         return self.file.name
 
-    @models.permalink
     def get_absolute_url(self):
-        return ('upload-new', )
+        return reverse('upload-new', args=())
 
     def save(self, *args, **kwargs):
         super(Attachment, self).save(*args, **kwargs)

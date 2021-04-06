@@ -1,5 +1,4 @@
-from django.contrib.staticfiles.templatetags.staticfiles import static
-
+from django.templatetags.static import static
 
 UPLOADER_DEFAULT_THUMBNAIL = static('img/default-thumbnail.png')
 
